@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import "./globals.css";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "MyContacts",
@@ -16,6 +17,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="px-4">
         <div className="flex justify-center mt-40 mb-10">
+          <Toaster />
           <div className="space-y-10 w-full max-w-xl">{children}</div>
         </div>
       </body>

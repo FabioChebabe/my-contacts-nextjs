@@ -27,7 +27,7 @@ export async function PUT(request: NextRequest, { params }: IPUTProps) {
         NOT: {
           id: contactId,
         },
-      }, // fine, since id is String
+      },
     },
     select: {
       email: true,
@@ -51,8 +51,4 @@ export async function PUT(request: NextRequest, { params }: IPUTProps) {
   });
 
   return NextResponse.json({ contact }, { status: 200 });
-}
-
-export async function DELETE(request: NextRequest, { params }: IPUTProps) {
-  const contactId = params.contactId;
 }

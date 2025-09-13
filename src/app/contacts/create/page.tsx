@@ -1,32 +1,51 @@
-"use client";
-
 import { ContactForm } from "@/components/ContactForm";
+import { Contact } from "@/generated/prisma";
+import { db } from "@/lib/db";
+import { ActionResponse } from "@/types/ActionResponse";
 import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import z from "zod";
+
+const schema = z.object({
+  name: z.string().min(1, "O nome é obrigatótrio"),
+  email: z.email("Informe um e-mail válido"),
+});
 
 export default function CreateContactPage() {
-  const router = useRouter();
-  async function handleSubmit(data: { name: string; email: string }) {
-    try {
-      const response = await fetch("/api/contacts", {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+  async function submitAction(
+    formData: FormData
+  ): Promise<ActionResponse<{ message: string; contact?: Contact }>> {
+    "use server";
 
-      const body = await response.json();
-      if (body.error) {
-        alert(body.error);
-      } else {
-        router.replace("/");
-      }
-    } catch (err) {
-      console.error("error >>", err);
-      alert(err);
+    const data = Object.fromEntries(formData);
+    const parsedData = schema.safeParse(data);
+    if (!parsedData.success) {
+      return {
+        status: "error",
+        body: {
+          message: parsedData.error.issues
+            .map((issue) => issue.message)
+            .join(" e "),
+        },
+      };
     }
+
+    const { email, name } = parsedData.data;
+
+    const contact = await db.contact.create({
+      data: {
+        name,
+        email,
+      },
+    });
+
+    return {
+      status: "success",
+      body: {
+        message: "Contato salvo com sucesso!",
+        contact,
+      },
+    };
   }
 
   return (
@@ -44,7 +63,7 @@ export default function CreateContactPage() {
         </h1>
       </header>
 
-      <ContactForm onSubmit={handleSubmit} />
+      <ContactForm submitAction={submitAction} />
     </>
   );
 }

@@ -1,48 +1,63 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { Loader2Icon } from "lucide-react";
+import { ActionResponse } from "@/types/ActionResponse";
+import { useRouter } from "next/navigation";
+import { Contact } from "@/generated/prisma";
+import { toast } from "sonner";
 
 interface IContactFormProps {
   contact?: {
     name: string;
     email: string;
   };
-  onSubmit?: (formData: { name: string; email: string }) => void;
+  submitAction: (
+    formData: FormData
+  ) => Promise<ActionResponse<{ message: string; contact?: Contact }>>;
 }
 
-export function ContactForm({ contact, onSubmit }: IContactFormProps) {
-  const [name, setName] = useState(contact?.name ?? "");
-  const [email, setEmail] = useState(contact?.email ?? "");
-
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    onSubmit?.({ name, email });
-  }
+export function ContactForm({ contact, submitAction }: IContactFormProps) {
+  const router = useRouter();
+  const [_state, clientSubmitAction, isPending] = useActionState(
+    async (_prevData: unknown, formData: FormData) => {
+      const response = await submitAction(formData);
+      if (response?.status === "success") {
+        toast.success(response.body.message, {
+          richColors: true,
+        });
+        router.push(`/contacts/${response.body?.contact?.id}/edit`);
+      }
+      if (response?.status === "error") {
+        toast.error(response?.body?.message, {
+          duration: 3000,
+          richColors: true,
+        });
+      }
+      return response;
+    },
+    null
+  );
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
+    <form className="space-y-4" action={clientSubmitAction}>
       <div className="space-y-1.5">
         <Label>Nome</Label>
-        <Input
-          value={name}
-          name="name"
-          onChange={(event) => setName(event.target.value)}
-        />
+        <Input name="name" defaultValue={contact?.name} />
       </div>
 
       <div className="space-y-1.5">
         <Label>E-mail</Label>
-        <Input
-          value={email}
-          name="email"
-          onChange={(event) => setEmail(event.target.value)}
-        />
+        <Input name="email" defaultValue={contact?.email} />
       </div>
 
-      <Button type="submit">{contact ? "Salvar" : "Criar"}</Button>
+      <Button type="submit" disabled={isPending}>
+        {isPending && <Loader2Icon className="size-4 mr-1 animate-spin" />}
+        {contact ? "Salvar" : "Criar"}
+      </Button>
     </form>
   );
 }

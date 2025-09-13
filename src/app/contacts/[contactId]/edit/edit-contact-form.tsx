@@ -1,5 +1,6 @@
 "use client";
 
+import { editContactAction } from "@/app/_actions/editContactActions";
 import { ContactForm } from "@/components/ContactForm";
 import { Contact } from "@/generated/prisma";
 import { ArrowLeftIcon } from "lucide-react";
@@ -10,27 +11,6 @@ interface EditContactFormProps {
 }
 
 export function EditContactForm({ contact }: EditContactFormProps) {
-  async function handleSubmit(data: { name: string; email: string }) {
-    try {
-      const response = await fetch(`/api/contacts/${contact.id}`, {
-        method: "PUT",
-        body: JSON.stringify(data),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      const body = await response.json();
-      console.log("body >>", body);
-      if (body.error) {
-        alert(body.error);
-      }
-    } catch (err) {
-      console.error("error >>", err);
-      alert(err);
-    }
-  }
-
   return (
     <>
       <header>
@@ -46,7 +26,10 @@ export function EditContactForm({ contact }: EditContactFormProps) {
         </h1>
       </header>
 
-      <ContactForm contact={contact} onSubmit={handleSubmit} />
+      <ContactForm
+        contact={contact}
+        submitAction={(formData) => editContactAction(formData, contact.id)}
+      />
     </>
   );
 }
