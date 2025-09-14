@@ -22,7 +22,7 @@ interface IContactFormProps {
 
 export function ContactForm({ contact, submitAction }: IContactFormProps) {
   const router = useRouter();
-  const [_state, clientSubmitAction, isPending] = useActionState(
+  const [state, clientSubmitAction, isPending] = useActionState(
     async (_prevData: unknown, formData: FormData) => {
       const response = await submitAction(formData);
       if (response?.status === "success") {
@@ -46,12 +46,18 @@ export function ContactForm({ contact, submitAction }: IContactFormProps) {
     <form className="space-y-4" action={clientSubmitAction}>
       <div className="space-y-1.5">
         <Label>Nome</Label>
-        <Input name="name" defaultValue={contact?.name} />
+        <Input
+          name="name"
+          defaultValue={contact?.name || state?.body.contact?.name}
+        />
       </div>
 
       <div className="space-y-1.5">
         <Label>E-mail</Label>
-        <Input name="email" defaultValue={contact?.email} />
+        <Input
+          name="email"
+          defaultValue={contact?.email || state?.body.contact?.email}
+        />
       </div>
 
       <Button type="submit" disabled={isPending}>

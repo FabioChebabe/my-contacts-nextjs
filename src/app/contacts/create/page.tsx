@@ -1,6 +1,7 @@
 import { ContactForm } from "@/components/ContactForm";
 import { Contact } from "@/generated/prisma";
 import { db } from "@/lib/db";
+import { mockContact } from "@/lib/utils";
 import { ActionResponse } from "@/types/ActionResponse";
 import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
@@ -12,25 +13,51 @@ const schema = z.object({
 });
 
 export default function CreateContactPage() {
-  async function submitAction(
-    formData: FormData
-  ): Promise<ActionResponse<{ message: string; contact?: Contact }>> {
+  async function submitAction(formData: FormData): Promise<
+    ActionResponse<{
+      message: string;
+      contact?: Contact;
+    }>
+  > {
     "use server";
 
     const data = Object.fromEntries(formData);
     const parsedData = schema.safeParse(data);
     if (!parsedData.success) {
+      const name = formData.get("name") as string;
+      const email = formData.get("email") as string;
       return {
         status: "error",
         body: {
           message: parsedData.error.issues
             .map((issue) => issue.message)
             .join(" e "),
+          contact: mockContact(name, email),
         },
       };
     }
 
     const { email, name } = parsedData.data;
+
+    const emailAlreadyExists = await db.contact.findFirst({
+      where: {
+        email,
+      },
+      select: {
+        email: true,
+        id: true,
+      },
+    });
+
+    if (emailAlreadyExists) {
+      return {
+        status: "error",
+        body: {
+          message: "Este e-mail já está salvo",
+          contact: mockContact(name, email),
+        },
+      };
+    }
 
     const contact = await db.contact.create({
       data: {

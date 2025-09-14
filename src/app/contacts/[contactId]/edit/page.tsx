@@ -11,7 +11,7 @@ interface CreateContactPageProps {
 export default async function CreateContactPage({
   params,
 }: CreateContactPageProps) {
-  const { contactId } = params;
+  const { contactId } = await params;
 
   try {
     const contact = await db.contact.findUnique({
